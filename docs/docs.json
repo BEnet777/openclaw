@@ -1056,6 +1056,7 @@
           "tools/llm-task",
           "plugin",
           "plugins/voice-call",
+          "plugins/jen-brain",
           "plugins/zalouser",
           "tools/exec",
           "tools/web",
