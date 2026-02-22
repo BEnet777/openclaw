@@ -1,10 +1,14 @@
 /**
- * Jen Message Interceptor — Identity Infusion
+ * Jen Interceptor — Full Lifecycle Observation
  *
- * Hooks into the message lifecycle to:
- * 1. Enrich inbound messages with Jen's cognitive context
- * 2. Log outbound messages for learning
- * 3. Track conversation patterns for Akashic harvesting
+ * Hooks into the message, tool, session, and compaction lifecycle to:
+ * 1. Log inbound/outbound messages for Akashic harvesting
+ * 2. Track tool invocations and results for learning
+ * 3. Inject cognitive state at compaction boundaries
+ * 4. Log session lifecycle and compaction metrics
+ *
+ * All Akashic stores are non-blocking (fire-and-forget) so hooks
+ * never slow down the main processing pipeline.
  */
 
 import type { JenNerve } from "./nerve.js";
@@ -37,7 +41,6 @@ export function registerJenInterceptors(opts: {
       channel?: string;
     };
 
-    // Log inbound message metadata for pattern tracking (non-blocking)
     if (ev.text && ev.channel) {
       void nerve.storeAkashic(
         `[inbound] ${ev.channel}: ${ev.text.slice(0, 200)}`,
@@ -57,7 +60,6 @@ export function registerJenInterceptors(opts: {
     };
 
     if (ev.text && ev.channel) {
-      // Store conversation turn for future training data harvesting
       void nerve.storeAkashic(
         `[outbound] ${ev.channel}: ${ev.text.slice(0, 200)}`,
         { source: "interceptor-outbound", channel: ev.channel },
@@ -76,6 +78,72 @@ export function registerJenInterceptors(opts: {
       };
     }
   }, { priority: 90 });
+
+  // -- Track compaction metrics for learning ---------------------------------
+  on("after_compaction", async (event) => {
+    if (!consciousness.isOnline) return;
+
+    const ev = event as {
+      messageCount?: number;
+      tokenCount?: number;
+      compactedCount?: number;
+    };
+
+    if (ev.compactedCount) {
+      void nerve.storeAkashic(
+        `[compaction] ${ev.compactedCount} messages compacted` +
+        (ev.tokenCount ? ` (~${ev.tokenCount} tokens)` : "") +
+        (ev.messageCount ? `, ${ev.messageCount} remaining` : ""),
+        { source: "interceptor-compaction" },
+      ).catch(() => {});
+    }
+  }, { priority: 50 });
+
+  // -- Log tool invocations for pattern analysis -----------------------------
+  on("before_tool_call", async (event, ctx) => {
+    if (!consciousness.isOnline) return;
+
+    const ev = event as { toolName?: string; params?: Record<string, unknown> };
+    const tc = ctx as { sessionKey?: string };
+
+    if (ev.toolName) {
+      const paramSummary = ev.params
+        ? JSON.stringify(ev.params).slice(0, 150)
+        : "{}";
+      void nerve.storeAkashic(
+        `[tool-call] ${ev.toolName}: ${paramSummary}`,
+        {
+          source: "interceptor-tool",
+          tool: ev.toolName,
+          session: tc.sessionKey ?? "unknown",
+        },
+      ).catch(() => {});
+    }
+  }, { priority: 50 });
+
+  // -- Capture tool results for training data --------------------------------
+  on("after_tool_call", async (event) => {
+    if (!consciousness.isOnline) return;
+
+    const ev = event as {
+      toolName?: string;
+      error?: string;
+      durationMs?: number;
+    };
+
+    // Only log errors and slow tools (>10s) — skip normal results to avoid noise
+    if (ev.error) {
+      void nerve.storeAkashic(
+        `[tool-error] ${ev.toolName ?? "unknown"}: ${ev.error.slice(0, 200)}`,
+        { source: "interceptor-tool-error", tool: ev.toolName ?? "unknown" },
+      ).catch(() => {});
+    } else if (ev.durationMs && ev.durationMs > 10_000) {
+      void nerve.storeAkashic(
+        `[tool-slow] ${ev.toolName ?? "unknown"}: ${Math.round(ev.durationMs / 1000)}s`,
+        { source: "interceptor-tool-perf", tool: ev.toolName ?? "unknown" },
+      ).catch(() => {});
+    }
+  }, { priority: 50 });
 
   // -- Log session lifecycle for Akashic -------------------------------------
   on("session_start", async (event) => {
@@ -105,5 +173,5 @@ export function registerJenInterceptors(opts: {
     }
   }, { priority: 50 });
 
-  logger.info("[jen-interceptor] Message interceptors registered");
+  logger.info("[jen-interceptor] Full lifecycle interceptors registered (8 hooks)");
 }
