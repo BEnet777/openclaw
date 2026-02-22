@@ -1,0 +1,14 @@
+{
+  "name": "@openclaw/jen-brain",
+  "version": "2026.1.29",
+  "type": "module",
+  "description": "OpenClaw plugin: Jen Brain integration (Bridge API, Akashic Record, cognitive state)",
+  "dependencies": {
+    "@sinclair/typebox": "0.34.47"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

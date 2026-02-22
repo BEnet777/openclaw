@@ -11,7 +11,8 @@
     "./cli-entry": "./openclaw.mjs"
   },
   "bin": {
-    "openclaw": "./openclaw.mjs"
+    "openclaw": "./openclaw.mjs",
+    "jen": "./openclaw.mjs"
   },
   "files": [
     "dist/acp/**",
