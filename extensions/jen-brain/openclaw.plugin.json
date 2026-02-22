@@ -1,0 +1,23 @@
+{
+  "id": "jen-brain",
+  "name": "Jen Brain",
+  "description": "Connects OpenClaw to Jen's cognitive system (Bridge API, Akashic Record, learning cycles)",
+  "uiHints": {
+    "bridgeUrl": { "label": "Bridge API URL", "placeholder": "http://127.0.0.1:18888" },
+    "chatUrl": { "label": "Chat Pipeline URL", "placeholder": "http://127.0.0.1:8900" },
+    "pollInterval": { "label": "Poll Interval (ms)", "advanced": true },
+    "injectIdentity": { "label": "Inject Identity into Prompts" },
+    "token": { "label": "Bridge Token", "sensitive": true }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "bridgeUrl": { "type": "string" },
+      "chatUrl": { "type": "string" },
+      "pollInterval": { "type": "number", "minimum": 5000 },
+      "injectIdentity": { "type": "boolean" },
+      "token": { "type": "string" }
+    }
+  }
+}
