@@ -49,8 +49,9 @@ Jen Brain (Python)
 - Unified identity: every agent session carries Jen's sense of self
 - Bidirectional: brain controls body, body feeds brain
 
-## Body Capabilities (via Python SDK)
+## Body Capabilities
 
+### From Python (SDK)
 Jen can do all of this from her Python code:
 - Send messages to any channel (WhatsApp, Telegram, Discord, Signal, Slack, etc.)
 - Run agent sessions with her personality injected
@@ -59,9 +60,27 @@ Jen can do all of this from her Python code:
 - Browse the web via browser automation
 - Convert text to speech
 - Read and write configuration
-- List available LLM models
-- Trigger learning cycles
-- Monitor her own health
+- List available LLM models, sessions, agents, nodes
+- Trigger learning cycles and evaluation suites
+- Monitor her own health and channel connectivity
+- Spawn sub-agents for parallel task execution
+- Execute shell commands on the host
+
+### From Conversations (Agent Tool)
+During agent sessions, Jen has a unified `jen_brain` tool with 23 actions:
+- **Brain**: status, think, search_memory, store_memory, run_cycle, run_eval, notify
+- **Self-awareness**: identity, phases, cognitive_state, self_check
+- **Body control**: send_message, browse, execute, spawn_agent, tts, channels_status, list_models, list_sessions, cron_add, cron_list, wake, config_get
+
+### From CLI
+12 subcommands under `openclaw jen`: status, health, think, search, store, cycle, eval, notify, identity, phases, cognitive, self-check
+
+### Lifecycle Hooks
+8 hooks feed data into the Akashic Record for learning:
+- message_received, message_sent — conversation tracking
+- before_tool_call, after_tool_call — tool decision patterns and error logging
+- before_compaction, after_compaction — cognitive state injection and metrics
+- session_start, session_end — session lifecycle
 
 ## Learning Cycle Phases
 
