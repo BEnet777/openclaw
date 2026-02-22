@@ -64,10 +64,16 @@ export class JenNerve {
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        return { ok: false, error: `HTTP ${res.status}: ${text}` };
+        this.logger?.warn(`[jen-nerve] HTTP ${res.status}: ${text.slice(0, 500)}`);
+        return { ok: false, error: `Bridge error (HTTP ${res.status})` };
       }
 
-      const data = (await res.json()) as T;
+      let data: T;
+      try {
+        data = (await res.json()) as T;
+      } catch {
+        return { ok: false, error: "Invalid response from bridge" };
+      }
       return { ok: true, data };
     } catch (err) {
       clearTimeout(timer);
@@ -76,7 +82,7 @@ export class JenNerve {
       }
       const msg = err instanceof Error ? err.message : String(err);
       this.logger?.warn(`[jen-nerve] Request failed: ${msg}`);
-      return { ok: false, error: msg };
+      return { ok: false, error: "Bridge request failed" };
     }
   }
 

@@ -269,7 +269,7 @@ export function registerJenBodyMethods(opts: {
       }
       const result = await dispatch("sessions.preview", {
         sessionKey,
-        limit: typeof params.limit === "number" ? params.limit : 50,
+        limit: Math.max(1, Math.min(200, typeof params.limit === "number" ? params.limit : 50)),
       }, context);
       respond(true, result);
     } catch (err) {
@@ -428,7 +428,8 @@ export function registerJenBodyMethods(opts: {
         respond(false, { error: "text is required" });
         return;
       }
-      const severity = typeof params.severity === "string" ? params.severity : "info";
+      const rawSev = typeof params.severity === "string" ? params.severity : "info";
+      const severity = ["info", "warn", "error"].includes(rawSev) ? rawSev : "info";
       const result = await nerve.notify(text, severity);
       respond(true, result);
     } catch (err) {

@@ -38,6 +38,14 @@ const jenBrainPlugin = {
     // depend on dispatch will return "gateway not ready" errors.
     let gatewayHandlers: Record<string, Function> | null = null;
 
+    // Allowlist of core gateway methods that jen-brain may dispatch to.
+    const ALLOWED_DISPATCH = new Set([
+      "send", "agent", "channels.status", "wake", "browser.request",
+      "models.list", "sessions.list", "sessions.preview", "chat.send",
+      "cron.add", "cron.list", "cron.remove", "cron.run",
+      "tts.convert", "config.get", "config.set", "health",
+    ]);
+
     /**
      * Dispatch: invoke another gateway method by name.
      * Uses the handler map captured at gateway_start. Falls back to
@@ -48,6 +56,9 @@ const jenBrainPlugin = {
       params: Record<string, unknown>,
       handlerContext: Record<string, unknown>,
     ): Promise<unknown> {
+      if (!ALLOWED_DISPATCH.has(method)) {
+        throw new Error(`Dispatch not allowed for method: ${method}`);
+      }
       // Use the context's internal dispatch if available (provided by the gateway)
       const ctx = handlerContext as {
         _dispatch?: (method: string, params: Record<string, unknown>) => Promise<unknown>;

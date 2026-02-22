@@ -191,7 +191,7 @@ export function createJenBrainTool(nerve: JenNerve, dispatch?: ToolDispatch) {
           case "search_memory": {
             const q = String(params.query || "").trim();
             if (!q) return json({ error: "query is required for search_memory" });
-            const lim = typeof params.limit === "number" ? params.limit : 5;
+            const lim = Math.max(1, Math.min(100, typeof params.limit === "number" ? params.limit : 5));
             const result = await nerve.searchAkashic(q, lim);
             if (!result) return json({ error: "Brain offline — cannot search Akashic" });
             return json({
@@ -248,7 +248,8 @@ export function createJenBrainTool(nerve: JenNerve, dispatch?: ToolDispatch) {
           case "notify": {
             const t = String(params.prompt || "").trim();
             if (!t) return json({ error: "prompt (text) is required for notify" });
-            const sev = String(params.severity || "info").trim();
+            const rawSev = String(params.severity || "info").trim();
+            const sev = ["info", "warn", "error"].includes(rawSev) ? rawSev : "info";
             const result = await nerve.notify(t, sev);
             if (!result) return json({ error: "Brain offline — cannot send notification" });
             return json(result);
