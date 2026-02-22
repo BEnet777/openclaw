@@ -216,6 +216,12 @@
   - changed-files:
       - any-glob-to-any-file:
           - "extensions/open-prose/**"
+"extensions: jen-brain":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "extensions/jen-brain/**"
+          - "docs/plugins/jen-brain.md"
+          - "skills/jen-brain/**"
 "extensions: qwen-portal-auth":
   - changed-files:
       - any-glob-to-any-file:

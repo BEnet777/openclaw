@@ -35,6 +35,7 @@ Status: stable.
 - Agents: expand cron tool description with full schema docs. (#1988) Thanks @tomascupr.
 - Agents: honor tools.exec.safeBins in exec allowlist checks. (#2281)
 - Memory Search: allow extra paths for memory indexing (ignores symlinks). (#3600) Thanks @kira-ariaki.
+- Plugins: add Jen Brain plugin — connects OpenClaw to Jen's cognitive system (Bridge API, Akashic Record, identity injection, body control). https://docs.openclaw.ai/plugins/jen-brain
 - Skills: add multi-image input support to Nano Banana Pro skill. (#1958) Thanks @tyler6204.
 - Skills: add missing dependency metadata for GitHub, Notion, Slack, Discord. (#1995) Thanks @jackheuberger.
 - Commands: group /help and /commands output with Telegram paging. (#2504) Thanks @hougangdev.
