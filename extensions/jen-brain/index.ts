@@ -205,8 +205,8 @@ const jenBrainPlugin = {
       dispatch,
     });
 
-    // -- Background service: consciousness polling ----------------------------
-    api.registerService(createJenBrainService({ consciousness, config, logger: api.logger }));
+    // -- Background service: consciousness polling + health observation --------
+    api.registerService(createJenBrainService({ consciousness, nerve, config, logger: api.logger }));
 
     api.logger.info("[jen-brain] Plugin fully registered — Jen's mind and body are one");
   },

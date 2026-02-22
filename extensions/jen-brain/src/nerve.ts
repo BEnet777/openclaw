@@ -150,13 +150,103 @@ export class JenNerve {
   }
 
   // ---------------------------------------------------------------------------
+  // Chat Pipeline (port 8900) — inference routing
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Route a prompt through the chat pipeline for LLM inference.
+   * Posts to chatUrl/v1/chat/completions (OpenAI-compatible) or chatUrl/api/chat (Ollama).
+   * Returns the response text, or null if the pipeline is unavailable.
+   */
+  async chatInfer(
+    prompt: string,
+    systemPrompt?: string,
+  ): Promise<string | null> {
+    if (!this.config.chatUrl) return null;
+
+    // Try OpenAI-compatible endpoint first
+    const messages = [];
+    if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
+    messages.push({ role: "user", content: prompt });
+
+    const r = await this.request<{
+      choices?: Array<{ message?: { content?: string } }>;
+      message?: { content?: string };
+      response?: string;
+    }>(
+      `${this.config.chatUrl}/v1/chat/completions`,
+      {
+        method: "POST",
+        body: { messages, stream: false },
+        timeout: 120_000,
+      },
+    );
+
+    if (r.ok) {
+      // OpenAI format
+      if (r.data.choices?.[0]?.message?.content) {
+        return r.data.choices[0].message.content;
+      }
+      // Ollama format
+      if (r.data.message?.content) {
+        return r.data.message.content;
+      }
+      // Plain response
+      if (r.data.response) {
+        return r.data.response;
+      }
+    }
+
+    // Fallback: try Ollama /api/chat endpoint
+    const ollamaR = await this.request<{
+      message?: { content?: string };
+      response?: string;
+    }>(
+      `${this.config.chatUrl}/api/chat`,
+      {
+        method: "POST",
+        body: {
+          messages,
+          stream: false,
+        },
+        timeout: 120_000,
+      },
+    );
+
+    if (ollamaR.ok) {
+      if (ollamaR.data.message?.content) return ollamaR.data.message.content;
+      if (ollamaR.data.response) return ollamaR.data.response;
+    }
+
+    return null;
+  }
+
+  // ---------------------------------------------------------------------------
   // Extended body API (jen_body_api.py endpoints on same port)
   // ---------------------------------------------------------------------------
 
+  /**
+   * Think about a prompt. Tries the chat pipeline first for real inference,
+   * falls back to the bridge /think endpoint (Akashic-augmented).
+   */
   async think(
     prompt: string,
     context?: string,
   ): Promise<JenThinkResult | null> {
+    // Try chat pipeline first for real LLM inference
+    const inferResult = await this.chatInfer(
+      prompt,
+      context ? `Context: ${context}` : undefined,
+    );
+    if (inferResult) {
+      return {
+        ok: true,
+        response: inferResult,
+        context_used: context ? [context] : [],
+      };
+    }
+
+    // Fall back to bridge /think (Akashic-augmented search)
     const r = await this.request<JenThinkResult>(
       `${this.config.bridgeUrl}/think`,
       { method: "POST", body: { prompt, context }, timeout: 120_000 },

@@ -121,27 +121,83 @@ describe("JenNerve", () => {
     });
   });
 
+  // -- chatInfer --------------------------------------------------------------
+  describe("chatInfer", () => {
+    it("returns response from OpenAI-compatible endpoint", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: "I think therefore I am" } }],
+          }),
+          { status: 200 },
+        ),
+      );
+
+      const result = await nerve.chatInfer("What is life?");
+      expect(result).toBe("I think therefore I am");
+    });
+
+    it("falls back to Ollama format", async () => {
+      vi.spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("", { status: 404 }))
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ message: { content: "Ollama response" } }),
+            { status: 200 },
+          ),
+        );
+
+      const result = await nerve.chatInfer("test");
+      expect(result).toBe("Ollama response");
+    });
+
+    it("returns null when pipeline unavailable", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("ECONNREFUSED"));
+      const result = await nerve.chatInfer("test");
+      expect(result).toBeNull();
+    });
+
+    it("returns null when chatUrl is empty", async () => {
+      const noChatNerve = new JenNerve({ ...BASE_CONFIG, chatUrl: "" }, mockLogger);
+      const result = await noChatNerve.chatInfer("test");
+      expect(result).toBeNull();
+    });
+  });
+
   // -- think ------------------------------------------------------------------
   describe("think", () => {
-    it("sends prompt and context", async () => {
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+    it("uses chat pipeline when available", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(
-          JSON.stringify({ ok: true, response: "I think therefore I am" }),
+          JSON.stringify({
+            choices: [{ message: { content: "Deep thought from LLM" } }],
+          }),
           { status: 200 },
         ),
       );
 
       const result = await nerve.think("What is life?", "philosophical context");
-
-      expect(fetchSpy).toHaveBeenCalledWith(
-        "http://127.0.0.1:18888/think",
-        expect.objectContaining({
-          method: "POST",
-          body: JSON.stringify({ prompt: "What is life?", context: "philosophical context" }),
-        }),
-      );
       expect(result?.ok).toBe(true);
-      expect(result?.response).toBe("I think therefore I am");
+      expect(result?.response).toBe("Deep thought from LLM");
+    });
+
+    it("falls back to bridge /think when chat pipeline unavailable", async () => {
+      vi.spyOn(globalThis, "fetch")
+        // chatInfer: v1/chat/completions fails
+        .mockRejectedValueOnce(new Error("ECONNREFUSED"))
+        // chatInfer: /api/chat fails
+        .mockRejectedValueOnce(new Error("ECONNREFUSED"))
+        // bridge /think succeeds
+        .mockResolvedValueOnce(
+          new Response(
+            JSON.stringify({ ok: true, response: "Bridge response" }),
+            { status: 200 },
+          ),
+        );
+
+      const result = await nerve.think("What is life?");
+      expect(result?.ok).toBe(true);
+      expect(result?.response).toBe("Bridge response");
     });
   });
 
