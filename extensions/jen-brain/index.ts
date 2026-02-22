@@ -31,6 +31,58 @@ const jenBrainPlugin = {
     const nerve = new JenNerve(config, api.logger);
     const consciousness = new JenConsciousness(nerve, api.logger);
 
+    // -- Internal dispatch handler map -----------------------------------------
+    // Plugins cannot directly invoke other gateway methods, so we collect
+    // registered core-method handlers at gateway_start and dispatch through
+    // the handler map. Before the gateway starts, body-api methods that
+    // depend on dispatch will return "gateway not ready" errors.
+    let gatewayHandlers: Record<string, Function> | null = null;
+
+    /**
+     * Dispatch: invoke another gateway method by name.
+     * Uses the handler map captured at gateway_start. Falls back to
+     * a direct-response wrapper that the handler can write into.
+     */
+    async function dispatch(
+      method: string,
+      params: Record<string, unknown>,
+      handlerContext: Record<string, unknown>,
+    ): Promise<unknown> {
+      // Use the context's internal dispatch if available (provided by the gateway)
+      const ctx = handlerContext as {
+        _dispatch?: (method: string, params: Record<string, unknown>) => Promise<unknown>;
+        _handlers?: Record<string, Function>;
+      };
+
+      // Strategy 1: If the gateway provides a dispatch function, use it
+      if (typeof ctx._dispatch === "function") {
+        return ctx._dispatch(method, params);
+      }
+
+      // Strategy 2: If we captured the handler map, call the handler directly
+      if (gatewayHandlers?.[method]) {
+        return new Promise((resolve, reject) => {
+          const respond = (ok: boolean, payload?: unknown) => {
+            if (ok) resolve(payload);
+            else reject(new Error(typeof payload === "object" && payload && "error" in payload
+              ? String((payload as Record<string, unknown>).error)
+              : "Gateway method failed"));
+          };
+          try {
+            const result = gatewayHandlers![method]({ params, respond, context: handlerContext });
+            if (result && typeof (result as Promise<void>).catch === "function") {
+              (result as Promise<void>).catch(reject);
+            }
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+
+      // Strategy 3: Gateway not ready yet — this happens during early boot
+      throw new Error(`Gateway dispatch not available for method: ${method}`);
+    }
+
     // -- Tool: jen_brain (7 actions) ------------------------------------------
     api.registerTool(createJenBrainTool(nerve), { optional: true });
 
@@ -71,6 +123,17 @@ const jenBrainPlugin = {
         `[openclaw] Agent session completed: ${msgCount} messages`,
         { source: "openclaw-agent-end" },
       ).catch(() => {});
+    });
+
+    // -- Hook: capture handler map at gateway start ---------------------------
+    api.on("gateway_start", async (_event, ctx) => {
+      // The gateway context's _handlers map is populated before this fires.
+      // We store it for dispatch use.
+      const gctx = ctx as { _handlers?: Record<string, Function> };
+      if (gctx._handlers) {
+        gatewayHandlers = gctx._handlers;
+        api.logger.info("[jen-brain] Captured gateway handler map for internal dispatch");
+      }
     });
 
     // -- Message interceptors: track all inbound/outbound ---------------------
@@ -130,22 +193,14 @@ const jenBrainPlugin = {
       }
     });
 
-    // -- Extended body methods: jen.send/channels/agent/cron/browse/etc -------
-    // These let Jen's Python SDK control the full body via gateway RPC
+    // -- Extended body methods ------------------------------------------------
     registerJenBodyMethods({
       registerMethod: api.registerGatewayMethod.bind(api),
       nerve,
       consciousness,
       logger: api.logger,
       config,
-      callGateway: async (method: string, params: Record<string, unknown>) => {
-        // Use the plugin runtime to invoke other gateway methods internally
-        const rt = api.runtime as { gateway?: { invoke(m: string, p: unknown): Promise<unknown> } };
-        if (rt.gateway?.invoke) {
-          return await rt.gateway.invoke(method, params);
-        }
-        throw new Error(`Gateway runtime not available for internal call: ${method}`);
-      },
+      dispatch,
     });
 
     // -- Background service: consciousness polling ----------------------------
