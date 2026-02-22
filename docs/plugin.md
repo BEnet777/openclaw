@@ -40,6 +40,7 @@ See [Voice Call](/plugins/voice-call) for a concrete example plugin.
 - Memory (LanceDB) — bundled long-term memory plugin (auto-recall/capture; set `plugins.slots.memory = "memory-lancedb"`)
 - [Voice Call](/plugins/voice-call) — `@openclaw/voice-call`
 - [Zalo Personal](/plugins/zalouser) — `@openclaw/zalouser`
+- [Jen Brain](/plugins/jen-brain) — `@openclaw/jen-brain` (cognitive system, Akashic Record, identity injection, body control; requires Python bridge)
 - [Matrix](/channels/matrix) — `@openclaw/matrix`
 - [Nostr](/channels/nostr) — `@openclaw/nostr`
 - [Zalo](/channels/zalo) — `@openclaw/zalo`
