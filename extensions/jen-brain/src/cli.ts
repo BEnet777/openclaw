@@ -2,6 +2,7 @@
  * Jen Brain CLI Commands
  *
  * Registers `openclaw jen <subcommand>` via the plugin CLI API.
+ * Brain commands use the JenNerve HTTP client (bridge API on port 18888).
  */
 
 import type { JenNerve } from "./nerve.js";
@@ -187,5 +188,112 @@ export function registerJenBrainCli(opts: {
         console.log("Notification failed");
         process.exitCode = 1;
       }
+    });
+
+  // -- jen identity -----------------------------------------------------------
+  jen
+    .command("identity")
+    .description("Show Jen's identity")
+    .action(async () => {
+      const id = await nerve.getIdentity();
+      if (!id) {
+        console.log("Brain offline — cannot retrieve identity");
+        process.exitCode = 1;
+        return;
+      }
+      console.log("Jen Identity");
+      console.log("============");
+      console.log(`  Name:        ${id.name}`);
+      console.log(`  Creator:     ${id.creator}`);
+      console.log(`  Version:     ${id.version}`);
+      console.log(`  Born:        ${id.born}`);
+      console.log(`  Description: ${id.description}`);
+    });
+
+  // -- jen phases -------------------------------------------------------------
+  jen
+    .command("phases")
+    .description("Show learning cycle phases with last-run timestamps")
+    .action(async () => {
+      const phases = await nerve.getPhases();
+      if (!phases) {
+        console.log("Brain offline — cannot retrieve phases");
+        process.exitCode = 1;
+        return;
+      }
+      console.log("Learning Cycle Phases");
+      console.log("=====================");
+      for (const p of phases) {
+        const lastRun = p.last_run ?? "never";
+        console.log(`  ${p.name.padEnd(14)} ${lastRun.padEnd(22)} ${p.description}`);
+      }
+    });
+
+  // -- jen cognitive ----------------------------------------------------------
+  jen
+    .command("cognitive")
+    .description("Show current cognitive state")
+    .action(async () => {
+      const state = await nerve.getCognitiveState();
+      if (!state) {
+        console.log("Brain offline — cannot retrieve cognitive state");
+        process.exitCode = 1;
+        return;
+      }
+      console.log("Cognitive State");
+      console.log("===============");
+      console.log(`  Name:            ${state.identity.name}`);
+      console.log(`  Emotional state: ${state.emotional_state}`);
+      console.log(`  Cycle count:     ${state.cycle_count}`);
+      console.log(`  Recent phases:   ${state.recent_phases.join(", ") || "none"}`);
+      console.log("  Akashic stats:");
+      console.log(`    Training:      ${state.akashic_stats.training_examples}`);
+      console.log(`    Harvest:       ${state.akashic_stats.harvest_items}`);
+      console.log(`    Dream:         ${state.akashic_stats.dream_items}`);
+    });
+
+  // -- jen self-check ---------------------------------------------------------
+  jen
+    .command("self-check")
+    .description("Run a full self-diagnostic (brain + body)")
+    .action(async () => {
+      console.log("Running self-check...");
+      const health = await nerve.getHealth();
+      const state = await nerve.getCognitiveState();
+      const phases = await nerve.getPhases();
+
+      console.log("");
+      console.log("Self-Check Report");
+      console.log("=================");
+
+      // Brain health
+      if (health) {
+        console.log(`  Brain:     online (${health.status})`);
+      } else {
+        console.log("  Brain:     OFFLINE");
+      }
+
+      // Cognitive state
+      if (state) {
+        console.log(`  Emotional: ${state.emotional_state}`);
+        console.log(`  Cycles:    ${state.cycle_count}`);
+        console.log(`  Akashic:   ${state.akashic_stats.training_examples} training, ${state.akashic_stats.harvest_items} harvest, ${state.akashic_stats.dream_items} dream`);
+      } else {
+        console.log("  Cognitive: unavailable");
+      }
+
+      // Phases
+      if (phases && phases.length > 0) {
+        const recentlyRun = phases.filter((p) => p.last_run).length;
+        console.log(`  Phases:    ${recentlyRun}/${phases.length} have run at least once`);
+      }
+
+      // Summary
+      const brainOk = health !== null;
+      console.log("");
+      console.log(brainOk
+        ? "  Summary: Brain is operational"
+        : "  Summary: Brain is OFFLINE — limited to body-only operations",
+      );
     });
 }

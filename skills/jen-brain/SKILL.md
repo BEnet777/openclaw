@@ -11,6 +11,7 @@ Use the jen-brain plugin to interact with Jen's cognitive system: think deeply, 
 ## CLI
 
 ```bash
+# Brain operations
 openclaw jen status                          # Brain health + Akashic stats
 openclaw jen health                          # Quick health check (exit 0/1)
 openclaw jen think "What is consciousness?"  # Route prompt through cognitive pipeline
@@ -19,13 +20,19 @@ openclaw jen store "New insight about X"     # Store knowledge in Akashic
 openclaw jen cycle --mode harvest            # Run a learning cycle phase
 openclaw jen eval --suite gauntlet           # Run evaluation suite
 openclaw jen notify "System update" --severity info
+
+# Self-awareness
+openclaw jen identity                        # Show Jen's identity
+openclaw jen phases                          # Learning cycle phases with timestamps
+openclaw jen cognitive                       # Current cognitive state
+openclaw jen self-check                      # Full diagnostic (brain + body)
 ```
 
 ## Tool
 
-Use `jen_brain` for agent-initiated brain interactions.
+Use `jen_brain` for agent-initiated brain and body interactions.
 
-Actions:
+### Brain actions
 - `status` — Brain health, Akashic stats, cycle count
 - `think` (prompt, context?) — Deep reasoning via cognitive pipeline
 - `search_memory` (query, limit?) — Search the Akashic Record
@@ -33,6 +40,26 @@ Actions:
 - `run_cycle` (mode?) — Trigger learning cycle (cycle, harvest, dream, forge)
 - `run_eval` (suite?) — Run evaluation/gauntlet suite
 - `notify` (prompt, severity?) — Send notification to Jen
+
+### Self-awareness actions
+- `identity` — Get Jen's identity (name, creator, version, born date)
+- `phases` — List all learning cycle phases with last-run timestamps
+- `cognitive_state` — Current cognitive/emotional state and Akashic stats
+- `self_check` — Full diagnostic: brain + body + channels + consciousness
+
+### Body control actions
+- `send_message` (channel, to, message, thinking?) — Send message to any channel
+- `browse` (url) — Navigate browser to URL
+- `execute` (command) — Run shell command
+- `spawn_agent` (task, thinking?) — Create sub-agent session
+- `tts` (text) — Text-to-speech
+- `channels_status` — List all messaging channel statuses
+- `list_models` — List available LLM models
+- `list_sessions` — List active agent sessions
+- `cron_add` (message, schedule) — Schedule recurring task
+- `cron_list` — List all scheduled tasks
+- `wake` (text) — Trigger agent wake event
+- `config_get` (path?) — Read OpenClaw configuration
 
 ## Python SDK
 

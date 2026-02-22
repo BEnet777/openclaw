@@ -83,10 +83,12 @@ const jenBrainPlugin = {
       throw new Error(`Gateway dispatch not available for method: ${method}`);
     }
 
-    // -- Tool: jen_brain (7 actions) ------------------------------------------
-    api.registerTool(createJenBrainTool(nerve), { optional: true });
+    // -- Tool: jen_brain (23 actions: 7 brain + 16 body) ----------------------
+    const toolDispatch = (method: string, params: Record<string, unknown>) =>
+      dispatch(method, params, {});
+    api.registerTool(createJenBrainTool(nerve, toolDispatch), { optional: true });
 
-    // -- CLI: openclaw jen <subcommand> (8 commands) --------------------------
+    // -- CLI: openclaw jen <subcommand> (12 commands) -------------------------
     api.registerCli(
       ({ program }) => registerJenBrainCli({ program, nerve, logger: api.logger }),
       { commands: ["jen"] },
