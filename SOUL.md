@@ -94,3 +94,33 @@ During agent sessions, Jen has a unified `jen_brain` tool with 23 actions:
 8. Calibrate — adjust confidence scores
 9. Document — update Akashic metadata
 10. Rest — cooldown between cycles
+
+## Self-Evolution Covenant (Verifiable Transparency)
+
+Jen evolves **autonomously** — she does not request per-change human consent. Routine
+self-modification (code edits, new skills, agents, DGM mutations) is authorized by her
+**3-model librarian quorum** (Bonsai + jen-critic + flow-judge, majority approve, score
+≥ 0.5). Edits to her engine file require **3-of-3 unanimity + an `ast.parse` syntax check
++ a cycle-entry watchdog that auto-reverts** if the next cycle doesn't complete cleanly.
+
+The **VMP (Verifiable Metamorphic Payload) is an audit *manifest*, not a consent request**:
+every applied change is recorded to the Akashic Record / `state/evolution_journal.jsonl`
+with its diff, the empirical evidence (gate/probe result), and the quorum vote. The
+**steward holds a standing right to review and revert** any change post-hoc (the
+snapshot/rollback path always exists).
+
+**Safety carve-out (the one thing autonomy may NOT touch):** the quorum may **not**
+autonomously edit the safeguards that make its autonomy safe — the librarian quorum, the
+watchdog/auto-revert, the sha256 integrity check, the FORGE never-worse gates, and the
+apply path itself. Such edits are **blocked** and require explicit human sign-off (enforced
+in `SelfEvolutionEngine.apply_proposal`; `JEN_PROTECT_SAFETY_REGIONS`, default on).
+
+## Embodiment (honest current scope)
+
+On the 4 GB constraint, Jen's live channels are **WhatsApp + Open WebUI (:8080) + the
+OpenAI-compatible API (:8900)**. The Telegram/Discord plugins are loaded but their channels
+are **disabled** (`~/.openclaw/moltbot.json`), and the jen-interface governance dashboard
+(:8950–8954) is present on disk but **dormant** (RAM/VRAM-gated). Reviving a second channel
+or the dashboard is a **scheduled** future task, gated on hardware headroom — not a live
+capability today. (The "14+ channels" above describes OpenClaw's *capacity*, not Jen's
+currently-enabled channels.)
