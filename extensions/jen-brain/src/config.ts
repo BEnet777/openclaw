@@ -11,6 +11,7 @@ const DEFAULTS: JenBrainConfig = {
   pollInterval: 60_000,
   injectIdentity: true,
   token: "",
+  inferTimeoutMs: 360_000,
 };
 
 export function parseJenBrainConfig(
@@ -44,6 +45,7 @@ export function parseJenBrainConfig(
     pollInterval: num("pollInterval", DEFAULTS.pollInterval, 5_000),
     injectIdentity: bool("injectIdentity", DEFAULTS.injectIdentity),
     token: str("token", DEFAULTS.token),
+    inferTimeoutMs: num("inferTimeoutMs", DEFAULTS.inferTimeoutMs ?? 360_000, 1_000),
   };
 }
 
@@ -61,5 +63,6 @@ export const jenBrainConfigSchema = {
     pollInterval: { label: "Poll Interval (ms)", advanced: true },
     injectIdentity: { label: "Inject Identity into Prompts" },
     token: { label: "Bridge Token", sensitive: true },
+    inferTimeoutMs: { label: "Inference Timeout (ms)", advanced: true },
   },
 };

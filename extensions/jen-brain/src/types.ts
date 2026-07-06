@@ -15,6 +15,12 @@ export type JenBrainConfig = {
   injectIdentity: boolean;
   /** Bearer token for authenticated bridge endpoints (empty = no auth) */
   token: string;
+  /**
+   * Timeout for LLM inference calls in milliseconds (default: 360_000).
+   * Cold-load of the 3.2 GB jen-trained GGUF takes 4-5 min on the GTX 1050 Ti,
+   * so inference needs a much longer window than the default request timeout.
+   */
+  inferTimeoutMs?: number;
 };
 
 // -- Bridge API responses ----------------------------------------------------

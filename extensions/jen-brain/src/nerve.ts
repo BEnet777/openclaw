@@ -23,6 +23,9 @@ import type {
 
 const DEFAULT_TIMEOUT = 30_000;
 const TRAINING_TIMEOUT = 600_000;
+// Cold-load of the 3.2 GB jen-trained GGUF takes 4-5 min on the GTX 1050 Ti,
+// so inference calls need far more than 120s. Overridable via config.inferTimeoutMs.
+const DEFAULT_INFER_TIMEOUT = 360_000;
 
 type Logger = { info(msg: string): void; warn(msg: string): void; error(msg: string): void };
 
@@ -35,6 +38,10 @@ export class JenNerve {
   // ---------------------------------------------------------------------------
   // Internal helpers
   // ---------------------------------------------------------------------------
+
+  private inferTimeout(): number {
+    return this.config.inferTimeoutMs ?? DEFAULT_INFER_TIMEOUT;
+  }
 
   private headers(): Record<string, string> {
     const h: Record<string, string> = { "Content-Type": "application/json" };
@@ -184,7 +191,7 @@ export class JenNerve {
       {
         method: "POST",
         body: { messages, stream: false },
-        timeout: 120_000,
+        timeout: this.inferTimeout(),
       },
     );
 
@@ -215,7 +222,7 @@ export class JenNerve {
           messages,
           stream: false,
         },
-        timeout: 120_000,
+        timeout: this.inferTimeout(),
       },
     );
 
@@ -255,7 +262,7 @@ export class JenNerve {
     // Fall back to bridge /think (Akashic-augmented search)
     const r = await this.request<JenThinkResult>(
       `${this.config.bridgeUrl}/think`,
-      { method: "POST", body: { prompt, context }, timeout: 120_000 },
+      { method: "POST", body: { prompt, context }, timeout: this.inferTimeout() },
     );
     return r.ok ? r.data : null;
   }

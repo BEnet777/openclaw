@@ -67,6 +67,32 @@ export function createJenBrainService(opts: {
       logger.info("[jen-brain] Service starting — cognitive state polling enabled");
       consciousness.startPolling(config.pollInterval);
 
+      // Fire-and-forget pre-warm of jen-trained in Ollama so the first real
+      // inference doesn't pay the 4-5 min cold-load on the GTX 1050 Ti.
+      // Never blocks startup; errors are logged and swallowed.
+      void fetch("http://127.0.0.1:11434/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "jen-trained",
+          prompt: "hi",
+          stream: false,
+          keep_alive: "120m",
+          options: { num_predict: 1 },
+        }),
+        signal: AbortSignal.timeout(600_000),
+      })
+        .then((res) => {
+          if (res.ok) {
+            logger.info("[jen-brain] Pre-warmed jen-trained in Ollama (keep_alive=120m)");
+          } else {
+            logger.warn(`[jen-brain] Ollama pre-warm returned HTTP ${res.status}`);
+          }
+        })
+        .catch((err) => {
+          logger.warn(`[jen-brain] Ollama pre-warm failed (non-fatal): ${String(err)}`);
+        });
+
       // Log initial connectivity after first poll settles
       setTimeout(() => {
         if (consciousness.isOnline) {
