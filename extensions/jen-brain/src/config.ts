@@ -10,7 +10,10 @@ const DEFAULTS: JenBrainConfig = {
   chatUrl: "http://127.0.0.1:8900",
   pollInterval: 60_000,
   injectIdentity: true,
-  token: "",
+  // Fall back to the shared bridge secret so the body authenticates without a
+  // separate plugin-config entry (report §16.4). An explicit plugin `token`
+  // still overrides. The gateway unit supplies JEN_BRIDGE_TOKEN.
+  token: process.env.JEN_BRIDGE_TOKEN ?? "",
   inferTimeoutMs: 360_000,
 };
 
